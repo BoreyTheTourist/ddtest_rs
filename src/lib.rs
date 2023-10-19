@@ -1,7 +1,114 @@
+//! Data Driven Tests for Rust
+//!
+//! Provides macro attribute that makes it possible to write tests in Data Driven style([`git`])
+//!
+//! [`git`]: https://github.com/BoreyTheTourist/ddtest_rs
 use proc_macro::TokenStream;
 use quote::{format_ident, ToTokens};
 use syn::{ItemFn, FieldValue, Member, Expr, Lit};
 
+/// The whole point
+///
+/// # Usage
+/// This macro works properly only with parameter of folowing format:
+/// ```text
+/// {name}: {number_of_tests}
+/// ```
+///
+/// where
+/// - {_name_} is the name of variable/const that contains dataset and 
+/// - {_number_of_tests_} - number of test cases, or, what's the same, length of dataset
+///
+/// Target item of this macro is function, that __does__ have inputs and __does__ produce output,
+/// like following
+/// ```
+/// fn add(x: i32, y: i32) -> i32 { 
+///     x + y
+/// }
+/// ```
+///
+/// And so, there's certain demands to format of dataset. Every single test case is tuple of two
+/// elements: array of input parameters and result, expected to be returned from them. As example, consider
+/// you want to test `add` function. Test dataset for such case: 
+/// ```
+/// const DATA: [([i32; 2], i32); 2] = [
+///     ( [2, 3],   5 ),
+///     ( [-1, 4],  3 ),
+/// ];
+/// ```
+///
+/// That's full example:
+///
+/// ```
+/// # use ddtest_rs::test_data;
+/// const DATA: [([i32; 2], i32); 2] = [
+///     ( [2, 3],   5 ),
+///     ( [-1, 4],  3 ),
+/// ];
+///
+/// #[test_data(DATA: 2)]
+/// fn add(x: i32, y: i32) -> i32 {
+///     x + y
+/// }
+/// ```
+///
+/// This will produce following code(that will be placed __inside of scope__ of `add` function):
+/// ```
+/// #[test]
+/// fn test_0() {
+///     assert!(add(2, 3) == 5)
+/// }
+///
+/// #[test]
+/// fn test_1() {
+///     assert!(add(-1, 4) == 3)
+/// }
+/// ```
+///
+/// # Panics
+///
+/// - Target item is not function definition
+/// ```compile_fail
+/// #[test_data(DATA: 1)]
+/// struct SomeStruct;
+/// ```
+///
+/// - Wrong attribute format
+/// ```compile_fail
+/// #[test_data(DATA)]
+/// fn add(x: i32, y: i32) -> i32 {
+///     x + y
+/// }
+/// ```
+///
+/// - Not existing dataset
+///
+/// ```compile_fail
+/// const DATA: [([i32; 2], i32); 2] = [
+///     ( [2, 3],   5 ),
+///     ( [-1, 4],  3 ),
+/// ];
+///
+/// #[test_data(DATA1: 2)]
+/// fn add(x: i32, y: i32) -> i32 {
+///     x + y
+/// }
+/// ```
+///
+/// Also, test will fail if number of test cases more than actual len of dataset:
+/// ```
+/// # use ddtest_rs::test_data;
+/// const DATA: [([i32; 2], i32); 2] = [
+///     ( [2, 3],   5 ),
+///     ( [-1, 4],  3 ),
+/// ];
+///
+/// #[test_data(DATA: 3)]
+/// fn add(x: i32, y: i32) -> i32 {
+///     x + y
+/// }
+/// ```
+/// There is, `test_2` panics.
 #[proc_macro_attribute]
 pub fn test_data(attr: TokenStream, item: TokenStream) -> TokenStream {
     let item_ast: ItemFn = syn::parse(item).expect("Expected function definition");
