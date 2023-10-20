@@ -139,7 +139,10 @@ fn impl_test_data(attr_ast: &FieldValue, item_ast: &ItemFn) -> TokenStream {
         test_count -= 1;
 
         i = 1;
-        arguments = format!("{}[{}].0", data_name, test_count);
+        arguments = match arguments_count == 1 {
+            true => format!("{}[{}]", data_name, test_count),
+            _ => format!("{}[{}].0", data_name, test_count),
+        };
         while i < arguments_count {
             arguments = format!("{}, {}[{}].{}", arguments, data_name, test_count, i);
             i += 1;
