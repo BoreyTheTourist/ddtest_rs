@@ -142,14 +142,14 @@ fn impl_test_data(attr_ast: &FieldValue, item_ast: &ItemFn) -> TokenStream {
         test_count -= 1;
 
         i = 1;
-        arguments = format!("{}[{}].0[0]", data_name, test_count);
+        arguments = format!("{}[{}].0", data_name, test_count);
         while i < arguments_count {
-            arguments = format!("{}, {}[{}].0[{}]", arguments, data_name, test_count, i);
+            arguments = format!("{}, {}[{}].{}", arguments, data_name, test_count, i);
             i += 1;
         }
         name_cur = format_ident!("{}_{}", test_name, test_count);
         call = format!("{}({})", proxy_name, arguments);
-        gen_cur = format!("#[test]\nfn {}() {{assert!({} == {}[{}].1)}}", name_cur, call, data_name, test_count);
+        gen_cur = format!("#[test]\nfn {}() {{{}}}", name_cur, call);
         gen = format!("{}{}", gen, gen_cur);
     }
     let mut res = gen.parse().expect("Should been converted");
