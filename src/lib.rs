@@ -19,36 +19,34 @@ use syn::{ItemFn, FieldValue, Member, Expr, Lit};
 /// - {_name_} is the name of variable/const that contains dataset and 
 /// - {_number_of_tests_} - number of test cases, or, what's the same, length of dataset
 ///
-/// Target item of this macro is function, that __does__ have inputs and __does__ produce output,
-/// like following
+/// Target item of this macro is function, that asserts sth using it's inputs, like following
 /// ```
-/// fn add(x: i32, y: i32) -> i32 { 
-///     x + y
+/// fn add_test(x: i32, y: i32, res: i32) { 
+///     assert!(x + y == res)
 /// }
 /// ```
 ///
-/// And so, there's certain demands to format of dataset. Every single test case is tuple of two
-/// elements: array of input parameters and result, expected to be returned from them. As example, consider
-/// you want to test `add` function. Test dataset for such case: 
+/// And so, there's certain demands to format of dataset. Every single test case is tuple of
+/// input parameters. As example, consider you want to test `add` function. Test dataset for such case: 
 /// ```
-/// const DATA: [([i32; 2], i32); 2] = [
-///     ( [2, 3],   5 ),
-///     ( [-1, 4],  3 ),
+/// const DATA: [(i32, i32, i32); 2] = [
+///     ( 2, 3,   5 ),
+///     ( -1, 4,  3 ),
 /// ];
 /// ```
 ///
-/// That's full example:
+/// That's, full example:
 ///
 /// ```
 /// # use ddtest_rs::test_data;
-/// const DATA: [([i32; 2], i32); 2] = [
-///     ( [2, 3],   5 ),
-///     ( [-1, 4],  3 ),
+/// const DATA: [(i32, i32, i32); 2] = [
+///     ( 2, 3,   5 ),
+///     ( -1, 4,  3 ),
 /// ];
 ///
 /// #[test_data(DATA: 2)]
-/// fn add(x: i32, y: i32) -> i32 {
-///     x + y
+/// fn add_test(x: i32, y: i32, res: i32) {
+///     assert!(x + y == res)
 /// }
 /// ```
 ///
@@ -56,12 +54,12 @@ use syn::{ItemFn, FieldValue, Member, Expr, Lit};
 /// ```
 /// #[test]
 /// fn test_0() {
-///     assert!(add(2, 3) == 5)
+///     add(2, 3, 5)
 /// }
 ///
 /// #[test]
 /// fn test_1() {
-///     assert!(add(-1, 4) == 3)
+///     add(-1, 4, 3)
 /// }
 /// ```
 ///
@@ -76,36 +74,36 @@ use syn::{ItemFn, FieldValue, Member, Expr, Lit};
 /// - Wrong attribute format
 /// ```compile_fail
 /// #[test_data(DATA)]
-/// fn add(x: i32, y: i32) -> i32 {
-///     x + y
+/// fn add_test(x: i32, y: i32, res: i32) {
+///     assert!(x + y == res)
 /// }
 /// ```
 ///
 /// - Not existing dataset
 ///
 /// ```compile_fail
-/// const DATA: [([i32; 2], i32); 2] = [
-///     ( [2, 3],   5 ),
-///     ( [-1, 4],  3 ),
+/// const DATA: [(i32, i32, i32); 2] = [
+///     ( 2, 3,   5 ),
+///     ( -1, 4,  3 ),
 /// ];
 ///
 /// #[test_data(DATA1: 2)]
-/// fn add(x: i32, y: i32) -> i32 {
-///     x + y
+/// fn add_test(x: i32, y: i32, res: i32) {
+///     assert!(x + y == res)
 /// }
 /// ```
 ///
 /// Also, test will fail if number of test cases more than actual len of dataset:
 /// ```
 /// # use ddtest_rs::test_data;
-/// const DATA: [([i32; 2], i32); 2] = [
-///     ( [2, 3],   5 ),
-///     ( [-1, 4],  3 ),
+/// const DATA: [(i32, i32, i32); 2] = [
+///     ( 2, 3,   5 ),
+///     ( -1, 4,  3 ),
 /// ];
 ///
 /// #[test_data(DATA: 3)]
-/// fn add(x: i32, y: i32) -> i32 {
-///     x + y
+/// fn add_test(x: i32, y: i32, res: i32) {
+///     assert!(x + y == res)
 /// }
 /// ```
 /// There is, `test_2` panics.
